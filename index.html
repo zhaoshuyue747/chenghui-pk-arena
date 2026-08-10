@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>橙辉团队 · 小组PK战场</title>
+<style>
+  :root{
+    --bg0:#070b16; --bg1:#0d1530; --bg2:#131f45;
+    --gold:#ffd75e; --gold2:#ffb347;
+    --blue:#3d8bff; --blue2:#00c2ff;
+    --red:#ff5c3a; --red2:#ff9f43;
+    --txt:#e8eeff; --sub:#93a4c8; --line:rgba(120,160,255,.18);
+    --card:linear-gradient(160deg,rgba(20,32,66,.92),rgba(10,16,34,.94));
+    --glowBlue:0 0 24px rgba(61,139,255,.55);
+    --glowRed:0 0 24px rgba(255,92,58,.55);
+    --glowGold:0 0 30px rgba(255,215,94,.6);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--bg0)}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;
+    color:var(--txt); min-height:100vh; overflow-x:hidden;
+    background:
+      radial-gradient(1100px 500px at 12% -5%, rgba(61,139,255,.16), transparent 60%),
+      radial-gradient(1100px 500px at 88% -5%, rgba(255,92,58,.14), transparent 60%),
+      radial-gradient(900px 600px at 50% 110%, rgba(255,215,94,.07), transparent 60%),
+      linear-gradient(180deg,var(--bg0),var(--bg1) 45%,var(--bg0));
+  }
+  /* 背景网格 + 扫描线 */
+  .grid{position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+    background-image:linear-gradient(rgba(120,160,255,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(120,160,255,.05) 1px,transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);
+            mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);}
+  .scan{position:fixed;left:0;right:0;height:140px;z-index:0;pointer-events:none;opacity:.05;
+    background:linear-gradient(180deg,transparent,rgba(255,255,255,.9),transparent);
+    animation:scan 7s linear infinite}
+  @keyframes scan{0%{top:-160px}100%{top:110vh}}
+  .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+
+  /* ===== 顶部横幅 ===== */
+  .hero{text-align:center;padding:26px 10px 10px}
+  .hero .kick{display:inline-flex;align-items:center;gap:10px;font-size:12px;letter-spacing:4px;
+    color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:5px 16px;
+    background:rgba(20,32,66,.5);backdrop-filter:blur(4px)}
+  .hero .kick b{color:var(--gold)}
+  .hero h1{margin:14px 0 4px;font-size:clamp(30px,5vw,46px);font-weight:900;letter-spacing:3px;
+    background:linear-gradient(90deg,var(--blue2),#fff 40%,var(--gold) 80%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:0 0 40px rgba(61,139,255,.35)}
+  .hero .sub{font-size:13px;color:var(--sub);letter-spacing:2px}
+  .hero .sub b{color:var(--gold2)}
+
+  /* ===== VS 大屏 ===== */
+  .vs{border:1px solid var(--line);border-radius:20px;margin-top:22px;position:relative;overflow:hidden;
+    background:var(--card);box-shadow:0 10px 50px rgba(0,0,0,.45)}
+  .vs::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(90deg,rgba(61,139,255,.08),transparent 40%,transparent 60%,rgba(255,92,58,.08))}
+  .vs-top{display:flex;align-items:center;justify-content:space-between;padding:26px 30px 8px;gap:10px}
+  .team{flex:1;text-align:center}
+  .team .tname{font-size:clamp(22px,3.4vw,32px);font-weight:900;letter-spacing:2px}
+  .team .tlead{font-size:12px;color:var(--sub);margin-top:4px;letter-spacing:1px}
+  .team.dong .tname{color:var(--blue);text-shadow:0 0 18px rgba(61,139,255,.8)}
+  .team.xi .tname{color:var(--red);text-shadow:0 0 18px rgba(255,92,58,.8)}
+  .vslogo{font-size:clamp(40px,7vw,64px);font-weight:900;font-style:italic;flex:0 0 auto;
+    background:linear-gradient(180deg,#fff,#8fa3ff 55%,var(--gold));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 0 18px rgba(255,215,94,.5));animation:vsPulse 2.2s ease-in-out infinite}
+  @keyframes vsPulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 12px rgba(255,215,94,.4))}
+    50%{transform:scale(1.07);filter:drop-shadow(0 0 26px rgba(255,215,94,.8))}}
+  /* 月度/周PK 切换 */
+  .mode-switch{display:flex;justify-content:center;gap:10px;margin:12px 0 0}
+  .ms-btn{font-family:inherit;font-size:13px;font-weight:800;letter-spacing:1px;color:var(--sub);
+    background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;
+    padding:7px 22px;cursor:pointer;transition:all .25s}
+  .ms-btn:hover{color:#fff;border-color:rgba(255,255,255,.35)}
+  .ms-btn.active{color:#fff;background:linear-gradient(135deg,#1d2f66,#16214a);
+    border-color:rgba(255,215,94,.55);box-shadow:0 0 18px rgba(255,215,94,.28)}
+  .ms-btn.active.ms-month{text-shadow:0 0 10px rgba(255,215,94,.6)}
+  .vs-score{display:flex;align-items:baseline;justify-content:center;gap:34px;padding:6px 0 4px}
+  .vs-score .num{font-size:clamp(52px,9vw,84px);font-weight:900;line-height:1;font-family:"Segoe UI",Arial,sans-serif}
+  .team.dong .num{color:#fff;text-shadow:0 0 30px rgba(61,139,255,.9)}
+  .team.xi .num{color:#fff;text-shadow:0 0 30px rgba(255,92,58,.9)}
+  .vs-score .colon{font-size:clamp(30px,5vw,46px);font-weight:900;color:var(--gold);animation:vsPulse 2.2s ease-in-out infinite}
+  .vs-round{margin:2px 0 14px;font-size:11px;color:var(--sub);text-align:center;letter-spacing:3px}
+  .bar{display:flex;height:14px;margin:0 26px 4px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.06)}
+  .bar>div{transition:width 1.2s cubic-bezier(.22,1,.36,1);height:100%}
+  .bar .b-dong{background:linear-gradient(90deg,var(--blue),var(--blue2));box-shadow:var(--glowBlue)}
+  .bar .b-xi{background:linear-gradient(90deg,var(--red),var(--red2));box-shadow:var(--glowRed)}
+  .bar-label{display:flex;justify-content:space-between;padding:0 28px 18px;font-size:12px;color:var(--sub)}
+  .bar-label b{font-size:15px;color:#fff}
+
+  /* 冠军加冕条 */
+  .crown{margin:0 26px 22px;border-radius:14px;padding:12px 18px;display:none;align-items:center;gap:12px;
+    background:linear-gradient(90deg,rgba(255,215,94,.14),rgba(255,215,94,.03));
+    border:1px solid rgba(255,215,94,.4);box-shadow:var(--glowGold);animation:rise .8s ease both}
+  .crown.show{display:flex}
+  .crown .cicon{font-size:30px;animation:spin 4s linear infinite}
+  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  .crown .ctext{flex:1;font-size:14px;letter-spacing:1px}
+  .crown .ctext b{font-size:18px;color:var(--gold)}
+  .crown .cprize{font-size:15px;color:var(--gold);font-weight:900;font-family:"Segoe UI",Arial,sans-serif}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ===== 分区标题 ===== */
+  .sec{margin-top:30px;display:flex;align-items:center;gap:12px}
+  .sec .tag{font-size:16px;font-weight:900;letter-spacing:2px;padding:7px 16px;border-radius:10px;color:#fff;
+    background:linear-gradient(135deg,#1d2f66,#16214a);border:1px solid var(--line);box-shadow:0 4px 18px rgba(0,0,0,.35)}
+  .sec .tag.gold{background:linear-gradient(135deg,#8a6a12,#5c4710);border-color:rgba(255,215,94,.5)}
+  .sec .tag.red{background:linear-gradient(135deg,#6e1d14,#4a120c);border-color:rgba(255,92,58,.5)}
+  .sec .line{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+  .sec .note{font-size:11px;color:var(--sub)}
+
+  /* ===== 周度指标对抗 ===== */
+  .pk-card{border:1px solid var(--line);border-radius:18px;margin-top:16px;overflow:hidden;background:var(--card)}
+  .pk-row{display:flex;align-items:center;gap:12px;padding:11px 20px;border-bottom:1px solid rgba(120,160,255,.08)}
+  .pk-row:last-child{border-bottom:none}
+  .pk-name{flex:0 0 150px;font-size:13px;color:var(--txt);font-weight:600}
+  .pk-name small{display:block;color:var(--sub);font-weight:400;font-size:10px}
+  .pk-side{flex:1;display:flex;align-items:center;gap:8px}
+  .pk-side .lab{flex:0 0 34px;font-size:10px;color:var(--sub);letter-spacing:1px}
+  .pk-track{flex:1;height:11px;border-radius:6px;background:rgba(255,255,255,.05);overflow:hidden}
+  .pk-track>i{display:block;height:100%;border-radius:6px;transition:width 1.1s cubic-bezier(.22,1,.36,1);width:0}
+  .pk-dong .pk-track>i{background:linear-gradient(90deg,var(--blue),var(--blue2));box-shadow:var(--glowBlue)}
+  .pk-xi .pk-track>i{background:linear-gradient(90deg,var(--red),var(--red2));box-shadow:var(--glowRed)}
+  .pk-val{flex:0 0 56px;text-align:right;font-size:15px;font-weight:800;font-family:"Segoe UI",Arial,sans-serif}
+  .pk-dong .pk-val{color:var(--blue2)}
+  .pk-xi .pk-val{color:var(--red2)}
+  .pk-winner{flex:0 0 56px;text-align:center;font-size:12px;font-weight:900;letter-spacing:1px;padding:3px 0;border-radius:8px}
+  .pk-winner.d{color:var(--blue2);background:rgba(61,139,255,.12)}
+  .pk-winner.x{color:var(--red2);background:rgba(255,92,58,.12)}
+  .pk-winner.tie{color:var(--gold);background:rgba(255,215,94,.1)}
+
+  /* ===== 团队能力晒表: 雷达 + 双条对抗 左右并排 ===== */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;align-items:stretch}
+  .duo-col{border:1px solid var(--line);border-radius:18px;background:var(--card);
+    padding:12px 14px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35);min-width:0}
+  .duo-title{font-size:14px;font-weight:900;letter-spacing:1px;padding:2px 4px 8px;
+    display:flex;align-items:baseline;gap:8px}
+  .duo-title small{font-size:10px;color:var(--sub);font-weight:400;letter-spacing:0}
+  .duo-title.d{color:var(--blue2)}
+  .duo-title.x{color:var(--red2)}
+  .duo-col .pk-card{border:none;background:transparent;box-shadow:none;margin-top:0}
+  .duo-col .pk-name{flex-basis:118px;font-size:12px}
+  .duo-col .pk-name small{font-size:9px}
+  .duo-col .pk-side .lab{flex-basis:26px;font-size:9px}
+  .duo-col .pk-val{flex-basis:46px;font-size:13px}
+  .duo-col .pk-winner{flex-basis:48px;font-size:11px}
+  #radar{width:100%;height:auto;display:block}
+  @media(max-width:900px){
+    .duo{grid-template-columns:1fr}
+    .duo-col .pk-name{flex-basis:150px;font-size:13px}
+    .duo-col .pk-side .lab{flex-basis:34px;font-size:10px}
+    .duo-col .pk-val{flex-basis:56px;font-size:15px}
+    .duo-col .pk-winner{flex-basis:56px;font-size:12px}
+  }
+
+  /* ===== 成员贡献排行榜 ===== */
+  .rank{border:1px solid var(--line);border-radius:18px;margin-top:16px;background:var(--card);
+    padding:12px 20px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+  .rk-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed rgba(120,160,255,.1)}
+  .rk-row:last-child{border-bottom:none}
+  .rk-no{flex:0 0 30px;height:30px;line-height:30px;text-align:center;border-radius:9px;font-weight:900;
+    font-size:14px;background:rgba(255,255,255,.05);color:var(--sub)}
+  .rk-no.g1{background:linear-gradient(135deg,#ffd75e,#e8a020);color:#3a2a00;box-shadow:0 0 14px rgba(255,215,94,.55)}
+  .rk-no.g2{background:linear-gradient(135deg,#e8ecf5,#9aa3b8);color:#222;box-shadow:0 0 10px rgba(200,210,235,.4)}
+  .rk-no.g3{background:linear-gradient(135deg,#f0b27a,#b9770e);color:#3a1d00;box-shadow:0 0 10px rgba(240,178,122,.4)}
+  .rk-name{flex:0 0 108px;font-size:14px;font-weight:700;white-space:nowrap}
+  .rk-tag{flex:0 0 48px;font-size:9px;font-weight:700;text-align:center;padding:2px 0;border-radius:999px;letter-spacing:1px}
+  .rk-tag.d{color:var(--blue2);background:rgba(61,139,255,.14)}
+  .rk-tag.x{color:var(--red2);background:rgba(255,92,58,.14)}
+  .rk-tag.lead{background:linear-gradient(90deg,var(--gold2),var(--gold));color:#3a2a00}
+  .rk-track{flex:1;height:12px;border-radius:7px;background:rgba(255,255,255,.05);overflow:hidden}
+  .rk-track>i{display:block;height:100%;border-radius:7px;transition:width 1.1s cubic-bezier(.22,1,.36,1);width:0}
+  .rk-row.d .rk-track>i{background:linear-gradient(90deg,var(--blue),var(--blue2));box-shadow:var(--glowBlue)}
+  .rk-row.x .rk-track>i{background:linear-gradient(90deg,var(--red),var(--red2));box-shadow:var(--glowRed)}
+  .rk-val{flex:0 0 62px;text-align:right;font-size:16px;font-weight:800;font-family:"Segoe UI",Arial,sans-serif;color:#fff}
+  .rk-row.d .rk-val{color:var(--blue2)}
+  .rk-row.x .rk-val{color:var(--red2)}
+
+  /* ===== 月度结算 ===== */
+  .month{border:1px solid var(--line);border-radius:18px;margin-top:16px;background:var(--card);padding:6px 20px 16px}
+  .m-head{display:flex;justify-content:space-between;padding:12px 0 6px;font-size:12px;color:var(--sub);letter-spacing:1px}
+  .m-head b{font-size:14px}
+  .m-head .dong b{color:var(--blue2)} .m-head .xi b{color:var(--red2)}
+  .m-row{display:flex;align-items:center;gap:14px;padding:9px 0;border-top:1px solid rgba(120,160,255,.08)}
+  .m-name{flex:0 0 120px;font-size:13px;font-weight:600}
+  .m-name small{display:block;color:var(--sub);font-weight:400;font-size:10px}
+  .m-side{flex:1;text-align:center;font-size:13px}
+  .m-side .v{font-size:17px;font-weight:800;font-family:"Segoe UI",Arial,sans-serif}
+  .m-side .g{font-size:10px;color:var(--sub)}
+  .m-side .ratio{height:8px;border-radius:5px;background:rgba(255,255,255,.06);margin-top:5px;overflow:hidden}
+  .m-side .ratio>i{display:block;height:100%;border-radius:5px;transition:width 1s}
+  .m-side.dong .ratio>i{background:linear-gradient(90deg,var(--blue),var(--blue2))}
+  .m-side.xi .ratio>i{background:linear-gradient(90deg,var(--red),var(--red2))}
+  .m-win{flex:0 0 46px;text-align:center;font-size:16px}
+  .m-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:12px 18px;
+    border-radius:12px;background:linear-gradient(90deg,rgba(61,139,255,.12),rgba(255,92,58,.12));border:1px solid var(--line)}
+  .m-total .tt{font-size:13px;color:var(--sub);letter-spacing:1px}
+  .m-total .tt b{display:block;font-size:22px;color:#fff;margin-top:2px;font-family:"Segoe UI",Arial,sans-serif}
+  .m-total .tt b.d{color:var(--blue2)} .m-total .tt b.x{color:var(--red2)}
+  .m-total .tt b.g{color:var(--gold)}
+  .prize{display:flex;gap:14px;margin-top:12px}
+  .prize>div{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .prize .p1{background:linear-gradient(160deg,rgba(255,215,94,.14),rgba(255,215,94,.03))}
+  .prize .p2{background:rgba(255,255,255,.03)}
+  .prize .plab{font-size:11px;color:var(--sub);letter-spacing:1px}
+  .prize .pval{font-size:24px;font-weight:900;margin-top:4px;font-family:"Segoe UI",Arial,sans-serif}
+  .prize .p1 .pval{color:var(--gold)}
+  .prize .p2 .pval{color:var(--txt)}
+
+  /* ===== 落后项整改 ===== */
+  .fix{border:1px solid rgba(255,92,58,.35);border-radius:18px;margin-top:16px;background:rgba(60,12,8,.35);
+    padding:14px 20px 8px;box-shadow:0 0 24px rgba(255,92,58,.08)}
+  .fix h3{font-size:14px;color:var(--red2);letter-spacing:2px;margin-bottom:8px}
+  .fix ul{list-style:none}
+  .fix li{display:flex;align-items:center;gap:10px;font-size:13px;padding:7px 0;border-bottom:1px dashed rgba(255,92,58,.15)}
+  .fix li:last-child{border-bottom:none}
+  .fix li .dot{width:7px;height:7px;border-radius:50%;background:var(--red2);box-shadow:0 0 8px var(--red2);flex:0 0 auto}
+  .fix li b{color:#fff}
+  .fix li .who{color:var(--sub);font-size:11px;margin-left:auto}
+  .fix li .due{color:var(--gold2);font-size:11px}
+
+  footer{margin-top:36px;text-align:center;font-size:11px;color:var(--sub);line-height:2}
+  footer .warn{display:inline-block;border:1px dashed rgba(255,215,94,.4);color:var(--gold2);
+    border-radius:8px;padding:4px 12px;margin-bottom:8px}
+  @media(max-width:640px){
+    .pk-name{flex-basis:96px}
+    .pk-val{flex-basis:44px;font-size:13px}
+    .m-name{flex-basis:88px}
+    .vs-top{padding:18px 14px 6px}
+    .bar{margin:0 14px 4px}.bar-label{padding:0 16px 14px}.crown{margin:0 14px 18px}
+  }
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="scan"></div>
+<div class="wrap">
+
+  <!-- 顶部横幅 -->
+  <div class="hero">
+    <div class="kick">橙辉团队 · 小组PK战场 <b>| FY27 Q2</b></div>
+    <h1>⚔ 莞东 VS 莞西 ⚔</h1>
+    <div class="sub" id="heroSub">周度对抗 · 结果说话</div>
+  </div>
+
+  <!-- VS 大屏 -->
+  <div class="vs">
+    <div class="vs-top">
+      <div class="team dong">
+        <div class="tname" id="nameDong">莞东组</div>
+        <div class="tlead" id="leadDong"></div>
+      </div>
+      <div class="vslogo">VS</div>
+      <div class="team xi">
+        <div class="tname" id="nameXi">莞西组</div>
+        <div class="tlead" id="leadXi"></div>
+      </div>
+    </div>
+    <div class="mode-switch">
+      <button class="ms-btn ms-month active" id="btnMonth">🏆 月度PK</button>
+      <button class="ms-btn ms-week" id="btnWeek">⚡ 周PK</button>
+    </div>
+    <div class="vs-score">
+      <div class="num" id="scoreDong">0</div>
+      <div class="colon">:</div>
+      <div class="num" id="scoreXi">0</div>
+    </div>
+    <div class="vs-round" id="roundLabel"></div>
+    <div class="bar"><div class="b-dong" id="barDong" style="width:50%"></div><div class="b-xi" id="barXi" style="width:50%"></div></div>
+    <div class="bar-label"><span>莞东组 <b id="pctDong">50%</b></span><span><b id="pctXi">50%</b> 莞西组</span></div>
+    <div class="crown" id="crown">
+      <div class="cicon">👑</div>
+      <div class="ctext">本周冠军: <b id="crownTeam"></b><br><span id="crownSub"></span></div>
+      <div class="cprize" id="crownPrize"></div>
+    </div>
+  </div>
+
+  <!-- 团队能力晒表: 雷达 + 双条对抗 左右并排 -->
+  <div class="sec">
+    <div class="tag gold">团队能力晒表</div>
+    <div class="line"></div>
+    <div class="note">左: 六维雷达总览 · 右: 逐项双条对抗 · 窄屏自动堆叠</div>
+  </div>
+  <div class="duo">
+    <div class="duo-col">
+      <div class="duo-title d">◈ 六维战力雷达 <small>相对组周目标完成比 · 上限130%</small></div>
+      <canvas id="radar" width="680" height="470"></canvas>
+    </div>
+    <div class="duo-col">
+      <div class="duo-title x">≡ 过程指标对抗 <small>得分 = 组完成 ÷ 组目标 × 满分</small></div>
+      <div class="pk-card" id="pkList"></div>
+    </div>
+  </div>
+
+  <!-- 成员贡献排行榜 -->
+  <div class="sec">
+    <div class="tag gold">成员贡献排行榜</div>
+    <div class="line"></div>
+    <div class="note">个人得分排名 · 前三名领奖台</div>
+  </div>
+  <div class="rank" id="rankList"></div>
+
+  <!-- 月度结算 -->
+  <div class="sec">
+    <div class="tag gold">月度结算 · 结果指标</div>
+    <div class="line"></div>
+    <div class="note">结果70% + 过程30% + AI超额加分</div>
+  </div>
+  <div class="month" id="monthBox"></div>
+
+  <!-- 落后项整改 -->
+  <div class="sec">
+    <div class="tag red">落后项整改</div>
+    <div class="line"></div>
+    <div class="note">周公示 · 当周闭环</div>
+  </div>
+  <div class="fix" id="fixBox"></div>
+
+  <footer>
+    <div class="warn">📊 数据来源: 实时数据大屏(信保) · 钉钉AI业务统计表(新绑定/AI退税) · 更新 2026-08-10</div>
+    <div>口径: 月度PK=结果70%+过程30%+AI超额 · 组指标=全员相加 · 周目标=总目标÷周数 · 橙辉团队管理组</div>
+  </footer>
+</div>
+
+<script>
+/* ================================================================
+ * ⚙ 数据区 —— 每周只需修改这里, 页面自动重算
+ * 六项指标顺序固定: [上门拜访数, 闪记提交率, 1天内建群率, 发品数, 推P率, 市场热卖主题发品数]
+ * 比率类(闪记/建群/推P)填小数: 0.90 = 90%
+ * ================================================================ */
+const DATA = {
+  meta: { week: '第1周', date: '2026-08-10' },            // 周次 / 数据日期
+  /* —— 周目标 = 总目标 ÷ 拆解周数(只改总目标, 周目标自动重算) —— */
+  splitWeeks: 4,                                         // 月度总目标按4周拆解(季度指标改13)
+  totalGoals: [120, 3.6, 3.6, 100, 2.0, 40],             // 组总目标: 拜访/闪记率/建群率/发品/推P率/热卖
+  weekTargets: [],                                       // 自动 = totalGoals ÷ splitWeeks
+  fullMarks:  [20, 20, 20, 15, 15, 10],                  // 各指标满分(合计100)
+  groups: {
+    dong: {
+      name: '莞东组', leader: '欧阳杰俊',
+      members: [
+        { name: '欧阳杰俊', role: '组长', v: [10, 0.90, 0.95, 8, 0.60, 3] },
+        { name: '赵舒越',   role: '',    v: [12, 0.85, 0.90, 10, 0.50, 4] },
+        { name: '冉崇明',   role: '',    v: [8,  0.95, 1.00, 6,  0.55, 2] }
+      ],
+      monthly: { bind: {done:3, goal:27}, credit: {done:1045613, goal:5691242}, ai: 0 },  // 绑定=新绑定客户; 信保=8月实收/8月目标; AI退税=8月签约(钉钉文档, 全员0签约)
+      procMonth: 78                                      // 过程指标月度汇总(满分100)
+    },
+    xi: {
+      name: '莞西组', leader: '燕磊',
+      members: [
+        { name: '燕磊',   role: '组长', v: [9,  0.80, 0.85, 7, 0.50, 2] },
+        { name: '刘鑫',   role: '',    v: [11, 0.90, 0.90, 9, 0.60, 3] },
+        { name: '李朝燕', role: '',    v: [7,  0.85, 0.95, 6, 0.45, 1] },
+        { name: '杨佳玮', role: '',    v: [10, 0.95, 0.90, 8, 0.55, 2] }
+      ],
+      monthly: { bind: {done:2, goal:36}, credit: {done:1913170, goal:8558560}, ai: 0 },  // 绑定=新绑定客户; 信保=8月实收/8月目标; AI退税=8月签约(钉钉文档, 全员0签约)
+      procMonth: 82
+    }
+  },
+  prize: { pool: 3000, championRate: 1 },              // 激励池 / 冠军分配比例(已确认: 冠军独享全额, 败组为0)
+  actions: [                                             // 落后项整改(每周公示)
+    { item: '闪记提交率落后 2.5pp(87.5% vs 90%)', who: '莞东组', due: '本周五' },
+    { item: '热卖主题发品数落后(8 vs 9)',         who: '莞西组', due: '下周一' }
+  ]
+};
+
+/* ==================== 计算层 ==================== */
+DATA.weekTargets = DATA.totalGoals.map(g => Math.round(g / DATA.splitWeeks * 1000) / 1000);  // 周目标=总目标÷周数
+const IDX = { visit:0, flash:1, group:2, publish:3, p4p:4, hot:5 };
+const LABELS = ['上门拜访数','闪记提交率','1天内建群率','发品数','推P率','市场热卖主题发品数'];
+const SHORT  = ['拜访','闪记','建群','发品','推P','热卖'];
+const SUM_IDX = [0, 3, 5];                                // 计数类: 求和
+const AVG_IDX = [1, 2, 4];                                // 比率类: 平均
+
+function groupWeekly(g){
+  const items = [0,0,0,0,0,0];
+  SUM_IDX.forEach(i => items[i] = g.members.reduce((s,m)=>s+m.v[i],0));
+  AVG_IDX.forEach(i => items[i] = g.members.reduce((s,m)=>s+m.v[i],0)/g.members.length);
+  g.weekly = items;
+  g.score = items.reduce((s,v,i)=> s + (DATA.weekTargets[i] ? v/DATA.weekTargets[i]*DATA.fullMarks[i] : 0), 0);
+  g.pScore = g.members.map(m =>
+    m.v.reduce((s,v,i)=> s + (DATA.weekTargets[i] ? v/DATA.weekTargets[i]*DATA.fullMarks[i] : 0), 0));
+}
+function monthlyCalc(g){
+  const b = g.monthly;
+  const result = (b.bind.done/b.bind.goal*40) + (b.credit.done/b.credit.goal*30) + Math.min(b.ai*10,30);
+  const aiExtra = Math.max(b.ai*10-30, 0);
+  g.mResult = result; g.mAi = aiExtra;
+  g.mTotal = result*0.7 + g.procMonth*0.3 + aiExtra;
+  return g;
+}
+const G_DONG = monthlyCalc(groupWeekly(DATA.groups.dong) || DATA.groups.dong);
+const G_XI   = monthlyCalc(groupWeekly(DATA.groups.xi)   || DATA.groups.xi);
+const champ = G_DONG.score >= G_XI.score ? G_DONG : G_XI;
+const monthChamp = G_DONG.mTotal >= G_XI.mTotal ? G_DONG : G_XI;
+
+/* ==================== 工具 ==================== */
+const $ = id => document.getElementById(id);
+const pct = v => (v*100).toFixed(1)+'%';
+const fmt = v => Math.round(v*100)/100;
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+function countUp(node, target, dec, dur=1200){
+  const t0 = performance.now();
+  (function tick(t){
+    const p = Math.min((t-t0)/dur, 1), ease = 1-Math.pow(1-p,3);
+    node.textContent = (target*ease).toFixed(dec==null?0:dec);
+    if(p<1) requestAnimationFrame(tick);
+  })(t0);
+}
+
+/* ==================== 渲染: VS大屏(月度PK优先, 可切周PK) ==================== */
+let vsMode = 'month';                                   // 'month' 先展示月度PK总分 | 'week' 切周PK得分
+function renderScore(){
+  const d = vsMode==='month' ? G_DONG.mTotal : G_DONG.score;
+  const x = vsMode==='month' ? G_XI.mTotal : G_XI.score;
+  const tot = d + x;
+  const cT = vsMode==='month' ? monthChamp : champ;
+  $('roundLabel').textContent = vsMode==='month'
+    ? '月度PK总分 · 结果70%+过程30%+AI超额 · 数据日期 ' + DATA.meta.date
+    : DATA.meta.week + ' · 周PK总分 · 满分100 · 数据日期 ' + DATA.meta.date;
+  countUp($('scoreDong'), d, 2); countUp($('scoreXi'), x, 2);
+  setTimeout(()=>{ $('barDong').style.width = pct(d/tot); $('barXi').style.width = pct(x/tot); }, 300);
+  setTimeout(()=>{ $('pctDong').textContent = pct(d/tot); $('pctXi').textContent = pct(x/tot); }, 1300);
+  $('crownTeam').textContent = cT.name;
+  $('crownSub').textContent = (vsMode==='month' ? '月度冠军' : '本周冠军') + ' · 领先 '
+    + fmt(Math.abs(d-x)) + ' 分 · 落后项当周整改';
+}
+function renderVS(){
+  $('nameDong').textContent = G_DONG.name; $('leadDong').textContent = '组长: '+G_DONG.leader;
+  $('nameXi').textContent = G_XI.name;     $('leadXi').textContent = '组长: '+G_XI.leader;
+  $('crown').classList.add('show');
+  $('crownPrize').textContent = '¥' + Math.round(DATA.prize.pool*DATA.prize.championRate);
+  renderScore();
+}
+$('btnMonth').addEventListener('click', ()=>{
+  vsMode='month'; $('btnMonth').classList.add('active'); $('btnWeek').classList.remove('active'); renderScore();
+});
+$('btnWeek').addEventListener('click', ()=>{
+  vsMode='week'; $('btnWeek').classList.add('active'); $('btnMonth').classList.remove('active'); renderScore();
+});
+
+/* ==================== 渲染: 周度指标对抗 ==================== */
+function renderPK(){
+  const list = $('pkList');
+  DATA.weekTargets.forEach((tg, i)=>{
+    const dv = G_DONG.weekly[i], xv = G_XI.weekly[i];
+    const scale = Math.max(dv, xv, tg) || 1;
+    const dScore = tg ? dv/tg*DATA.fullMarks[i] : 0;
+    const xScore = tg ? xv/tg*DATA.fullMarks[i] : 0;
+    const row = el('div','pk-row');
+    const nm = el('div','pk-name', LABELS[i]+' <small>目标 '+(AVG_IDX.includes(i)?pct(tg):tg)+' · 满分'+DATA.fullMarks[i]+'分</small>');
+    const mk = (side, val, cls, score)=>{
+      const s = el('div','pk-side '+cls);
+      s.append(el('div','lab',side==='d'?'莞东':'莞西'));
+      const tr = el('div','pk-track'); tr.append(el('i'));
+      s.append(tr);
+      s.append(el('div','pk-val', AVG_IDX.includes(i)?pct(val):val));
+      row.append(s);
+      setTimeout(()=>{ tr.firstChild.style.width = pct(val/scale); }, 200+i*80);
+    };
+    mk('d', dv, 'pk-dong', dScore); mk('x', xv, 'pk-xi', xScore);
+    const w = el('div','pk-winner '+(dScore>xScore?'d':xScore>dScore?'x':'tie'), dScore>xScore?'莞东胜':xScore>dScore?'莞西胜':'平');
+    row.append(nm, w);  // name 先插
+    row.prepend(nm);
+    list.append(row);
+  });
+}
+
+/* ==================== 渲染: 六维战力雷达(响应式) ==================== */
+function drawRadar(){
+  const cv = document.getElementById('radar');
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth || 640;
+  const H = Math.round(W * 470/680);
+  cv.width = W * dpr; cv.height = H * dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = W/2, cy = H/2 - 10, R = Math.min(W,H)/2 - 82;
+  const N = 6, L = SHORT;
+  const norm = g => g.weekly.map((v,i)=> Math.min(v/DATA.weekTargets[i], 1.3));
+  const d = norm(G_DONG), x = norm(G_XI);
+  const pt = (i, r) => { const a = -Math.PI/2 + i*2*Math.PI/N; return [cx + r*Math.cos(a), cy + r*Math.sin(a)]; };
+  ctx.clearRect(0, 0, W, H);
+  // 网格层(4层六边形)
+  for(let lv=1; lv<=4; lv++){
+    const r = R*lv/4;
+    ctx.beginPath();
+    for(let i=0;i<N;i++){ const [px,py]=pt(i,r); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(140,170,255,.13)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  // 对角线
+  for(let i=0;i<N;i++){
+    const [px,py] = pt(i, R);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(px,py);
+    ctx.strokeStyle = 'rgba(140,170,255,.10)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  // 数据多边形
+  const poly = (arr, color) => {
+    ctx.beginPath();
+    for(let i=0;i<N;i++){ const [px,py]=pt(i, arr[i]*R); i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+    ctx.closePath();
+    ctx.fillStyle = color + '38'; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.shadowColor = color; ctx.shadowBlur = 16; ctx.stroke(); ctx.shadowBlur = 0;
+    for(let i=0;i<N;i++){ const [px,py]=pt(i, arr[i]*R);
+      ctx.beginPath(); ctx.arc(px,py,3.5,0,7); ctx.fillStyle = color; ctx.fill(); }
+  };
+  poly(d, '#3d8bff'); poly(x, '#ff5c3a');
+  // 顶点标签 + 百分比
+  for(let i=0;i<N;i++){
+    const [px,py] = pt(i, R+26);
+    ctx.font = '13px "Microsoft YaHei"'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle = '#aebde0'; ctx.fillText(L[i], px, py);
+    const [dx,dy] = pt(i, d[i]*R-20), [xx,xy] = pt(i, x[i]*R+20);
+    ctx.font = 'bold 11px "Segoe UI"';
+    ctx.fillStyle = '#7fc0ff'; ctx.fillText((d[i]*100).toFixed(0)+'%', dx, dy);
+    ctx.fillStyle = '#ff9f7a'; ctx.fillText((x[i]*100).toFixed(0)+'%', xx, xy);
+  }
+  // 图例
+  ctx.font = '13px "Microsoft YaHei"'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle = '#7fc0ff'; ctx.fillText('● 莞东组', cx-130, cy+R+52);
+  ctx.fillStyle = '#ff9f7a'; ctx.fillText('● 莞西组', cx+130, cy+R+52);
+}
+
+/* ==================== 渲染: 成员贡献排行榜 ==================== */
+function renderRank(){
+  const list = $('rankList');
+  const rows = [G_DONG, G_XI].flatMap(g => g.members.map((m,i)=>({ name:m.name, role:m.role, g, score:g.pScore[i] })));
+  rows.sort((a,b)=> b.score - a.score);
+  const max = rows[0].score;
+  rows.forEach((r, idx)=>{
+    const row = el('div','rk-row '+(r.g===G_DONG?'d':'x'));
+    const no  = el('div','rk-no'+(idx<3?' g'+(idx+1):''), idx+1);
+    const nm  = el('div','rk-name', r.name);
+    const tg  = el('div','rk-tag '+(r.role?'lead':(r.g===G_DONG?'d':'x')), r.role || (r.g===G_DONG?'莞东':'莞西'));
+    const tr  = el('div','rk-track'); const bar = el('i'); tr.append(bar);
+    const vl  = el('div','rk-val', r.score.toFixed(1));
+    row.append(no, nm, tg, tr, vl);
+    list.append(row);
+    setTimeout(()=>{ bar.style.width = (r.score/max*100).toFixed(1)+'%'; }, 150 + idx*90);
+  });
+}
+
+/* ==================== 渲染: 月度结算 ==================== */
+function monthRow(name, sub, key, dFmt, xFmt){
+  const row = el('div','m-row');
+  row.append(el('div','m-name', name+' <small>'+sub+'</small>'));
+  const mk = (side, g)=>{
+    const s = el('div','m-side '+side);
+    s.append(el('div','v', side==='d'?dFmt(g,key):xFmt(g,key)));
+    s.append(el('div','g', g.monthly[key].done+'/'+g.monthly[key].goal));
+    const r = el('div','ratio'); r.append(el('i'));
+    s.append(r);
+    row.append(s);
+    setTimeout(()=>{ r.firstChild.style.width = pct(Math.min(g.monthly[key].done/g.monthly[key].goal,1.2)); }, 250);
+  };
+  mk('d', G_DONG); mk('x', G_XI);
+  const win = G_DONG.monthly[key].done/G_DONG.monthly[key].goal >= G_XI.monthly[key].done/G_XI.monthly[key].goal ? '莞东' : '莞西';
+  row.append(el('div','m-win', win==='莞东'?'🔵':'🔴'));
+  return row;
+}
+function renderMonth(){
+  const box = $('monthBox');
+  const h = el('div','m-head');
+  h.innerHTML = '<span>指标 <small>(月度/季度累计)</small></span><span class="dong"><b>莞东组</b></span><span class="xi"><b>莞西组</b></span><span></span>';
+  box.append(h);
+  box.append(monthRow('绑定客户数','完成比×40分','bind', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*40)+'分', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*40)+'分'));
+  box.append(monthRow('信保GMV','完成比×30分','credit', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*30)+'分', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*30)+'分'));
+  const aiRow = el('div','m-row');
+  aiRow.append(el('div','m-name','AI退税单数 <small>一单10分 · 超额加分</small>'));
+  [['d','dong',G_DONG],['x','xi',G_XI]].forEach(p=>{
+    const s = el('div','m-side '+p[1]);
+    s.append(el('div','v', p[2].monthly.ai+' 单'));
+    s.append(el('div','g', '基础'+Math.min(p[2].monthly.ai*10,30)+'分 · 超额+'+p[2].mAi));
+    aiRow.append(s);
+  });
+  aiRow.append(el('div','m-win', G_DONG.monthly.ai>=G_XI.monthly.ai?'🔵':'🔴'));
+  box.append(aiRow);
+  const tot = el('div','m-total');
+  tot.innerHTML =
+    '<div class="tt">月度PK总分<small> · 结果70%+过程30%+AI超额</small>'+
+    '<b class="d">'+fmt(G_DONG.mTotal)+'</b></div>'+
+    '<div class="tt">冠军判定<b class="g">'+(monthChamp===G_DONG?'莞东组':'莞西组')+'</b></div>'+
+    '<div class="tt" style="text-align:right">月度PK总分<small> · 同口径</small><b class="x">'+fmt(G_XI.mTotal)+'</b></div>';
+  box.append(tot);
+  const p = el('div','prize');
+  p.append(el('div','p1','<div class="plab">🏆 冠军组奖金(全额)</div><div class="pval">¥'+
+    Math.round(DATA.prize.pool*DATA.prize.championRate)+'</div>'));
+  p.append(el('div','p2','<div class="plab">🥈 败组奖金</div><div class="pval">¥0</div>'));
+  box.append(p);
+}
+
+/* ==================== 渲染: 落后项整改 ==================== */
+function renderFix(){
+  const box = $('fixBox');
+  const h = el('h3','⚠ 落后项整改清单(每周一公示 · 当周闭环)');
+  box.append(h);
+  const ul = el('ul');
+  DATA.actions.forEach(a=>{
+    const li = el('li');
+    li.append(el('span','dot'));
+    li.append(el('span', null, a.item));
+    li.append(el('span','who', a.who));
+    li.append(el('span','due', '⏱ '+a.due));
+    ul.append(li);
+  });
+  box.append(ul);
+}
+
+/* ==================== 启动 ==================== */
+renderVS(); renderPK(); drawRadar(); renderRank(); renderMonth(); renderFix();
+window.addEventListener('resize', () => drawRadar());
+</script>
+</body>
+</html>
