@@ -61,6 +61,8 @@
   .vs-top{display:flex;align-items:center;justify-content:space-between;padding:26px 30px 8px;gap:10px}
   .team{flex:1;text-align:center}
   .team .tname{font-size:clamp(22px,3.4vw,32px);font-weight:900;letter-spacing:2px}
+  .team .tslogan{margin-top:6px;font-size:12px;font-weight:600;letter-spacing:1px;font-style:italic;
+    color:var(--gold);text-shadow:0 0 12px rgba(255,215,94,.45)}
   .team .tlead{font-size:12px;color:var(--sub);margin-top:4px;letter-spacing:1px}
   .team.dong .tname{color:var(--blue);text-shadow:0 0 18px rgba(61,139,255,.8)}
   .team.xi .tname{color:var(--red);text-shadow:0 0 18px rgba(255,92,58,.8)}
@@ -243,7 +245,7 @@
   <!-- 顶部横幅 -->
   <div class="hero">
     <div class="kick">橙辉团队 · 小组PK战场 <b>| FY27 Q2</b></div>
-    <h1>⚔ 莞东 VS 莞西 ⚔</h1>
+    <h1 id="heroTitle">⚔ 拓金者 VS 雄狮出海 ⚔</h1>
     <div class="sub" id="heroSub">周度对抗 · 结果说话</div>
   </div>
 
@@ -251,12 +253,14 @@
   <div class="vs">
     <div class="vs-top">
       <div class="team dong">
-        <div class="tname" id="nameDong">莞东组</div>
+        <div class="tname" id="nameDong">拓金者</div>
+        <div class="tslogan" id="sloganDong"></div>
         <div class="tlead" id="leadDong"></div>
       </div>
       <div class="vslogo">VS</div>
       <div class="team xi">
-        <div class="tname" id="nameXi">莞西组</div>
+        <div class="tname" id="nameXi">雄狮出海</div>
+        <div class="tslogan" id="sloganXi"></div>
         <div class="tlead" id="leadXi"></div>
       </div>
     </div>
@@ -271,7 +275,7 @@
     </div>
     <div class="vs-round" id="roundLabel"></div>
     <div class="bar"><div class="b-dong" id="barDong" style="width:50%"></div><div class="b-xi" id="barXi" style="width:50%"></div></div>
-    <div class="bar-label"><span>莞东组 <b id="pctDong">50%</b></span><span><b id="pctXi">50%</b> 莞西组</span></div>
+    <div class="bar-label"><span><b id="lbDong">拓金者</b> <b id="pctDong">50%</b></span><span><b id="pctXi">50%</b> <b id="lbXi">雄狮出海</b></span></div>
     <div class="crown" id="crown">
       <div class="cicon">👑</div>
       <div class="ctext">本周冠军: <b id="crownTeam"></b><br><span id="crownSub"></span></div>
@@ -341,7 +345,7 @@ const DATA = {
   fullMarks:  [20, 20, 20, 15, 15, 10],                  // 各指标满分(合计100)
   groups: {
     dong: {
-      name: '莞东组', leader: '欧阳杰俊',
+      name: '拓金者', short: '拓金', leader: '欧阳杰俊', slogan: '拓遍四海,金揽八方',
       members: [
         { name: '欧阳杰俊', role: '组长', v: [10, 0.90, 0.95, 8, 0.60, 3] },
         { name: '赵舒越',   role: '',    v: [12, 0.85, 0.90, 10, 0.50, 4] },
@@ -351,7 +355,7 @@ const DATA = {
       procMonth: 78                                      // 过程指标月度汇总(满分100)
     },
     xi: {
-      name: '莞西组', leader: '燕磊',
+      name: '雄狮出海', short: '雄狮', leader: '燕磊', slogan: '放眼世界格局,聚力再创辉煌',
       members: [
         { name: '燕磊',   role: '组长', v: [9,  0.80, 0.85, 7, 0.50, 2] },
         { name: '刘鑫',   role: '',    v: [11, 0.90, 0.90, 9, 0.60, 3] },
@@ -364,8 +368,8 @@ const DATA = {
   },
   prize: { pool: 3000, championRate: 1 },              // 激励池 / 冠军分配比例(已确认: 冠军独享全额, 败组为0)
   actions: [                                             // 落后项整改(每周公示)
-    { item: '闪记提交率落后 2.5pp(87.5% vs 90%)', who: '莞东组', due: '本周五' },
-    { item: '热卖主题发品数落后(8 vs 9)',         who: '莞西组', due: '下周一' }
+    { item: '闪记提交率落后 2.5pp(87.5% vs 90%)', who: '拓金者', due: '本周五' },
+    { item: '热卖主题发品数落后(8 vs 9)',         who: '雄狮出海', due: '下周一' }
   ]
 };
 
@@ -433,6 +437,10 @@ function renderScore(){
 function renderVS(){
   $('nameDong').textContent = G_DONG.name; $('leadDong').textContent = '组长: '+G_DONG.leader;
   $('nameXi').textContent = G_XI.name;     $('leadXi').textContent = '组长: '+G_XI.leader;
+  $('heroTitle').textContent = '⚔ ' + G_DONG.name + ' VS ' + G_XI.name + ' ⚔';
+  $('sloganDong').textContent = '「' + G_DONG.slogan + '」';
+  $('sloganXi').textContent = '「' + G_XI.slogan + '」';
+  $('lbDong').textContent = G_DONG.name; $('lbXi').textContent = G_XI.name;
   $('crown').classList.add('show');
   $('crownPrize').textContent = '¥' + Math.round(DATA.prize.pool*DATA.prize.championRate);
   renderScore();
@@ -456,7 +464,7 @@ function renderPK(){
     const nm = el('div','pk-name', LABELS[i]+' <small>目标 '+(AVG_IDX.includes(i)?pct(tg):tg)+' · 满分'+DATA.fullMarks[i]+'分</small>');
     const mk = (side, val, cls, score)=>{
       const s = el('div','pk-side '+cls);
-      s.append(el('div','lab',side==='d'?'莞东':'莞西'));
+      s.append(el('div','lab',side==='d'?G_DONG.short:G_XI.short));
       const tr = el('div','pk-track'); tr.append(el('i'));
       s.append(tr);
       s.append(el('div','pk-val', AVG_IDX.includes(i)?pct(val):val));
@@ -464,7 +472,8 @@ function renderPK(){
       setTimeout(()=>{ tr.firstChild.style.width = pct(val/scale); }, 200+i*80);
     };
     mk('d', dv, 'pk-dong', dScore); mk('x', xv, 'pk-xi', xScore);
-    const w = el('div','pk-winner '+(dScore>xScore?'d':xScore>dScore?'x':'tie'), dScore>xScore?'莞东胜':xScore>dScore?'莞西胜':'平');
+    const w = el('div','pk-winner '+(dScore>xScore?'d':xScore>dScore?'x':'tie'),
+      dScore>xScore?G_DONG.name+'胜':xScore>dScore?G_XI.name+'胜':'平');
     row.append(nm, w);  // name 先插
     row.prepend(nm);
     list.append(row);
@@ -524,8 +533,8 @@ function drawRadar(){
   }
   // 图例
   ctx.font = '13px "Microsoft YaHei"'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle = '#7fc0ff'; ctx.fillText('● 莞东组', cx-130, cy+R+52);
-  ctx.fillStyle = '#ff9f7a'; ctx.fillText('● 莞西组', cx+130, cy+R+52);
+  ctx.fillStyle = '#7fc0ff'; ctx.fillText('● ' + G_DONG.name, cx-130, cy+R+52);
+  ctx.fillStyle = '#ff9f7a'; ctx.fillText('● ' + G_XI.name, cx+130, cy+R+52);
 }
 
 /* ==================== 渲染: 成员贡献排行榜 ==================== */
@@ -538,7 +547,7 @@ function renderRank(){
     const row = el('div','rk-row '+(r.g===G_DONG?'d':'x'));
     const no  = el('div','rk-no'+(idx<3?' g'+(idx+1):''), idx+1);
     const nm  = el('div','rk-name', r.name);
-    const tg  = el('div','rk-tag '+(r.role?'lead':(r.g===G_DONG?'d':'x')), r.role || (r.g===G_DONG?'莞东':'莞西'));
+    const tg  = el('div','rk-tag '+(r.role?'lead':(r.g===G_DONG?'d':'x')), r.role || (r.g===G_DONG?G_DONG.short:G_XI.short));
     const tr  = el('div','rk-track'); const bar = el('i'); tr.append(bar);
     const vl  = el('div','rk-val', r.score.toFixed(1));
     row.append(no, nm, tg, tr, vl);
@@ -561,14 +570,14 @@ function monthRow(name, sub, key, dFmt, xFmt){
     setTimeout(()=>{ r.firstChild.style.width = pct(Math.min(g.monthly[key].done/g.monthly[key].goal,1.2)); }, 250);
   };
   mk('d', G_DONG); mk('x', G_XI);
-  const win = G_DONG.monthly[key].done/G_DONG.monthly[key].goal >= G_XI.monthly[key].done/G_XI.monthly[key].goal ? '莞东' : '莞西';
-  row.append(el('div','m-win', win==='莞东'?'🔵':'🔴'));
+  const win = G_DONG.monthly[key].done/G_DONG.monthly[key].goal >= G_XI.monthly[key].done/G_XI.monthly[key].goal ? G_DONG.name : G_XI.name;
+  row.append(el('div','m-win', win===G_DONG.name?'🔵':'🔴'));
   return row;
 }
 function renderMonth(){
   const box = $('monthBox');
   const h = el('div','m-head');
-  h.innerHTML = '<span>指标 <small>(月度/季度累计)</small></span><span class="dong"><b>莞东组</b></span><span class="xi"><b>莞西组</b></span><span></span>';
+  h.innerHTML = '<span>指标 <small>(月度/季度累计)</small></span><span class="dong"><b>'+G_DONG.name+'</b></span><span class="xi"><b>'+G_XI.name+'</b></span><span></span>';
   box.append(h);
   box.append(monthRow('绑定客户数','完成比×40分','bind', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*40)+'分', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*40)+'分'));
   box.append(monthRow('信保GMV','完成比×30分','credit', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*30)+'分', (g,k)=>fmt(g.monthly[k].done/g.monthly[k].goal*30)+'分'));
@@ -586,7 +595,7 @@ function renderMonth(){
   tot.innerHTML =
     '<div class="tt">月度PK总分<small> · 结果70%+过程30%+AI超额</small>'+
     '<b class="d">'+fmt(G_DONG.mTotal)+'</b></div>'+
-    '<div class="tt">冠军判定<b class="g">'+(monthChamp===G_DONG?'莞东组':'莞西组')+'</b></div>'+
+    '<div class="tt">冠军判定<b class="g">'+(monthChamp===G_DONG?G_DONG.name:G_XI.name)+'</b></div>'+
     '<div class="tt" style="text-align:right">月度PK总分<small> · 同口径</small><b class="x">'+fmt(G_XI.mTotal)+'</b></div>';
   box.append(tot);
   const p = el('div','prize');
